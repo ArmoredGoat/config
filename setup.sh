@@ -26,9 +26,9 @@ clone_repository () {
 
     repo_path="$home/git/config"
     # Clone git repository to /home/git
-    git clone $url repo_path
+    git clone "$base_url/$repo.git" $repo_path
     # Move into repo directory
-    cd repo_path
+    cd $repo_path
     # Get current branch
     current_branch=$(git status | grep 'On branch' | awk '{print $3}')
 
@@ -94,7 +94,7 @@ install_qtile () {
     install_pip_package "git+https://github.com/qtile/qtile@master"
     runuser -l "$username" -c "qtile --version"
 
-    mkdir 
+    create_directory $home/.config/qtile
 }
 
 update_system () {
