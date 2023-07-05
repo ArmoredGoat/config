@@ -12,14 +12,23 @@ main () {
     clone_repository
     
     install_python
-    install_qtile
+    install_wm
 
     update_system
 }
 
+# G E N E R A L   F U N C T I O N S
+
+backup_directory () {
+    # Check if directory already exists. If yes, rename it.
+    if [ -d "$1" ]; then
+        mv $1 $1.backup
+    fi
+}
+
 clone_repository () {
     # Make sure that git is installed.
-    install_packages git
+    install_package git
 
     # Create directory for git repositories
     mkdir $home/git
@@ -68,37 +77,140 @@ set_ownership () {
     chown -R "$1":"$1" $2
 }
 
-install_packages () {
+install_package () {
     apt install -y $@
+}
+
+install_pip_package () {
+    # Check if pipx is installed and if not, install it
+    if  [ ! -n "$(pip list | grep pipx)" ]; then
+        install_pipx
+    fi
+    runuser -l "$username" -c "pipx install $1"
+}
+
+update_system () {
+    apt update && apt upgrade -y && apt autoremove -y && apt autoclean -y
+}
+
+# I N S T A L L A T I O N   F U N C T I O N S
+
+install_firefox () {
+    # Download latest version of Firefox
+    wget -O /tmp/firefoxsetup.tar.bz2 \
+        "https://download.mozilla.org/?product=firefox-latest&os=linux64&lang=en-US"
+    
+    # Extract archive and move content into /opt for global installation
+    tar -xf /tmp/firefoxsetup.tar.bz2 --directory=/opt
+
+    # Copy desktop entry to be able to launch firefox from rofi or any other
+    # application launcher
+    cp $repo_path/usr/share/applications/firefox.desktop \
+        /usr/share/applications/firefox.desktop
+
+    # Create symlink to be able to launch firefox from the CLI if needed
+    ln -s /opt/firefox/firefox /usr/local/bin/firefox
+
+    # Use this version as default browser (instead of firefox-esr
+    update-alternatives --install /usr/bin/x-www-browser x-www-browser \
+        /opt/firefox/firefox 200
+    update-alternatives --set x-www-browser /opt/firefox/firefox
+
+    # Remove firefox-esr as it is no longer needed
+    # Your configuration and bookmarks are kept 
+    # in .mozilla/firefox/*.default-esr
+    apt remove firefox-esr
+
+    # Remove archive as it is no longer needed
+    rm /tmp/firefoxsetup.tar.bz2
+}
+
+install_kitty () {
+    install_package kitty
+
+    backup_directory $home/.config/kitty
+    create_directory $home/.config/kitty
+
+    cp $repo_path/.config/kitty \
+        $home/.config/kitty
+}
+
+install_pipx () {
+    # Install pipx, an alternative pip frontend which address the problem 
+    # with '--break-system-packages'
+    runuser -l "$username" -c "pip3 install --break-system-packages pipx"
+    runuser -l "$username" -c "pipx ensurepath"
 }
 
 install_python () {
     python_packages="python3 python3-pip python3-venv"
-    install_packages $@
+    install_package $python_packages
 
-    # Install pipx, an alternative pip frontend which address the problem 
-    # with '--break-system-packages'
-    runuser -l "$username" -c "pip3 install --break-system-packages pipx"
+    install_pipx
 }
 
-install_pip_package () {
-    runuser -l "$username" -c "pipx install $1"
+install_pywal () {
+    pywal_dependencies="python3 imagemagick procps nitrogen"
+    install_package $pywal_dependencies
+
+    install_pip_package pywal
+
+    create_directory $home/.local/share/backgrounds
+    # Copy background image to appropriate directory
+    cp $repo_path/.local/share/backgrounds/hollow_knight_lantern.png \
+        $home/.local/share/backgrounds/hollow_knight_lantern.png
+    
+    # Generate colorscheme on basis of background image
+    wal -i $home/.local/share/backgrounds/hollow_knight_lantern.png
 }
 
 install_qtile () {
     # Install dependencies for qtile
-    qtile_dependencies="xserver-xorg xinit libpangocairo-1.0-0 python3-xcffib python3-cairocffi"
-    install_packages $@
+    qtile_dependencies="xserver-xorg xinit libpangocairo-1.0-0 python3-xcffib \
+        python3-cairocffi playerctl"
+    install_package $qtile_dependencies
 
     #runuser -l "$username" -c "pipx install qtile"
     install_pip_package "git+https://github.com/qtile/qtile@master"
     runuser -l "$username" -c "qtile --version"
 
+
+    backup_directory $home/.config/qtile
     create_directory $home/.config/qtile
+
+    # Copy qtile configuration files into directory
+    cp -r $repo_path/.config/qtile \
+        $home/.config/qtile
+
+    # Check if pywal is properly installed. If not, install it.
+    if  [ ! -n "$(pipx list | grep pywal)" ]; then
+        install_pywal
+    fi
 }
 
-update_system () {
-    apt update && apt upgrade -y && apt autoremove -y && apt autoclean -y
+install_rofi () {
+    install_package rofi
+
+    backup_directory $home/.config/rofi
+    create_directory $home/.config/rofi
+
+    # Copy rofi configuration files into directory
+    cp -r $repo_path/.config/rofi \
+        $home/.config/rofi
+}
+
+install_wm () {
+    install_qtile
+
+    install_pywal
+
+    install_rofi
+
+    install_firefox
+
+    install_kitty
+
+    install_package "bottom ranger"
 }
 
 main
