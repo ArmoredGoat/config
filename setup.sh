@@ -148,6 +148,16 @@ install_kitty () {
         $home/.config/kitty
 }
 
+install_picom () {
+    install_package picom
+
+    backup_directory $home/.config/picom
+    create_directory $home/.config/picom
+
+    cp -r $repo_path/.config/picom/* \
+        $home/.config/picom
+}
+
 install_pipx () {
     # Install pipx, an alternative pip frontend which address the problem 
     # with '--break-system-packages'
@@ -222,6 +232,8 @@ install_wm () {
     install_firefox
 
     install_kitty
+    
+    install_picom
 
     install_package "bottom ranger"
 }
