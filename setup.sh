@@ -21,9 +21,14 @@ main () {
 # G E N E R A L   F U N C T I O N S
 
 backup_directory () {
-    # Check if directory already exists. If yes, rename it.
+    # Check if directory already exists. If yes, create a directory to
+    # store exisiting config files as backup. Then move old config files
+    # into this directory.
     if [ -d "$1" ]; then
-        mv $1 $1.backup
+        if [ -d "$home/.config/.backup" ]; then
+            create_directory "$home/.config/.backup"
+        fi
+        mv $1 $home/.config/.backup/
     fi
 }
 
@@ -139,7 +144,7 @@ install_kitty () {
     backup_directory $home/.config/kitty
     create_directory $home/.config/kitty
 
-    cp -r $repo_path/.config/kitty \
+    cp -r $repo_path/.config/kitty/* \
         $home/.config/kitty
 }
 
@@ -187,7 +192,7 @@ install_qtile () {
     create_directory $home/.config/qtile
 
     # Copy qtile configuration files into directory
-    cp -r $repo_path/.config/qtile \
+    cp -r $repo_path/.config/qtile/* \
         $home/.config/qtile
 
     # Check if pywal is properly installed. If not, install it.
@@ -203,7 +208,7 @@ install_rofi () {
     create_directory $home/.config/rofi
 
     # Copy rofi configuration files into directory
-    cp -r $repo_path/.config/rofi \
+    cp -r $repo_path/.config/rofi/* \
         $home/.config/rofi
 }
 
