@@ -138,6 +138,16 @@ install_firefox () {
     rm /tmp/firefoxsetup.tar.bz2
 }
 
+install_nitrogen () {
+    install_package nitrogen
+
+    backup_directory $home/.config/nitrogen
+    create_directory $home/.config/nitrogen
+
+    cp -r $repo_path/.config/nitrogen/* \
+        $home/.config/nitrogen
+}
+
 install_kitty () {
     install_package kitty
 
@@ -225,6 +235,10 @@ install_rofi () {
 install_wm () {
     install_qtile
 
+    install_picom
+
+    install_nitrogen
+
     install_pywal
 
     install_rofi
@@ -232,8 +246,6 @@ install_wm () {
     install_firefox
 
     install_kitty
-    
-    install_picom
 
     install_package "bottom ranger"
 }
