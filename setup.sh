@@ -6,6 +6,7 @@ branch="main"
 url="$base_url/$repo/$branch"
 
 main () {
+    check_privilege
     get_user
     update_system
 
@@ -24,6 +25,13 @@ backup_directory () {
     if [ -d "$1" ]; then
         mv $1 $1.backup
     fi
+}
+
+check_privilege () {
+    if [ "$EUID" -ne 0 ]; then 
+        echo "Please run script as root with sudo."
+    exit
+fi
 }
 
 clone_repository () {
@@ -131,7 +139,7 @@ install_kitty () {
     backup_directory $home/.config/kitty
     create_directory $home/.config/kitty
 
-    cp $repo_path/.config/kitty \
+    cp -r $repo_path/.config/kitty \
         $home/.config/kitty
 }
 
@@ -161,7 +169,7 @@ install_pywal () {
         $home/.local/share/backgrounds/hollow_knight_lantern.png
     
     # Generate colorscheme on basis of background image
-    wal -i $home/.local/share/backgrounds/hollow_knight_lantern.png
+    runuser -l "$username" -c "wal -i $home/.local/share/backgrounds/hollow_knight_lantern.png"
 }
 
 install_qtile () {
