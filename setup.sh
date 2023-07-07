@@ -190,8 +190,8 @@ install_pywal () {
 
     create_directory $home/.local/share/backgrounds
     # Copy background image to appropriate directory
-    cp $repo_path/.local/share/backgrounds/hollow_knight_lantern.png \
-        $home/.local/share/backgrounds/hollow_knight_lantern.png
+    cp $repo_path/.local/share/backgrounds/* \
+        $home/.local/share/backgrounds/
     
     # Generate colorscheme on basis of background image
     runuser -l "$username" -c "wal -i $home/.local/share/backgrounds/hollow_knight_lantern.png"
@@ -232,6 +232,11 @@ install_rofi () {
         $home/.config/rofi
 }
 
+install_lightdm () {
+    lightdm_packages="lightdm slick-greeter"
+    install_package $lightdm_packages
+}
+
 install_wm () {
     install_qtile
 
@@ -248,6 +253,8 @@ install_wm () {
     install_kitty
 
     install_package "bottom ranger"
+
+    install_lightdm
 }
 
 main
