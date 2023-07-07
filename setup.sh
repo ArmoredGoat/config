@@ -167,6 +167,8 @@ install_kitty () {
 
     cp -r $repo_path/files/kitty/* \
         $home/.config/kitty
+    
+    create_directory $home/.local/share/fonts/ttf
 
     cp $repo_path/files/fonts/ttf/DejaVuSansMono-Bront.ttf \
         $home/.local/share/fonts/ttf/
@@ -214,7 +216,7 @@ install_pywal () {
 install_qtile () {
     # Install dependencies for qtile
     qtile_dependencies="xserver-xorg xinit libpangocairo-1.0-0 python3-xcffib \
-        python3-cairocffi playerctl dbus-x11"
+        python3-cairocffi playerctl dbus-x11 psutils"
     install_package $qtile_dependencies
 
     install_pip_package mypy
@@ -275,23 +277,24 @@ install_lightdm () {
 }
 
 install_wm () {
-    install_qtile
+    echo "Installing qtile..."
+    install_qtile > /dev/null
 
-    install_picom
+    install_picom > /dev/null
 
-    install_nitrogen
+    install_nitrogen > /dev/null
 
-    install_pywal
+    install_pywal > /dev/null
 
-    install_rofi
+    install_rofi > /dev/null
 
-    install_firefox
+    install_firefox > /dev/null
 
-    install_kitty
+    install_kitty > /dev/null
 
-    install_package "ranger"
+    install_package "ranger" > /dev/null
 
-    install_lightdm
+    install_lightdm > /dev/null
 }
 
 main
