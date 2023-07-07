@@ -19,7 +19,7 @@ main () {
     set_ownership $username $home
 
     update_system
-}
+} 2> stderror
 
 # G E N E R A L   F U N C T I O N S
 
@@ -55,7 +55,7 @@ clone_repository () {
     install_package git
 
     # Create directory for git repositories
-    mkdir $home/git
+    create_directory $home/git
 
     repo_path="$home/git/config"
     # Clone git repository to /home/git
@@ -74,19 +74,26 @@ clone_repository () {
 
 create_directory () {
 	# Check if directories exists. If not, create them.
-	if [[ ! -d $@ ]]; then
-	mkdir -pv $@
+	if [[ -d $@ ]]; then
+        printf "Directory '$@': already existent.\n"
+    else
+        mkdir -p $@
+        printf "Directory '$@': created.\n"
     fi
+
 	# This script is run with privileged rights. Therefore, anything created
 	# with it will be owned by root. To make sure that the permissions are set
 	# correclty, the function checks if the directory lies in the home folder.
 	# If so, it grants ownership to the user.
-	if [[ $@ = $home/* ]]; then
+	if [[ "$@" = "$home/*" ]]; then
 		# General permissions settings. If necessary, e.g. ssh keys, the
         # permissions will be set accordingly
-        chmod 755 $@
-		chown -R "$username":"$username" $@
+        chmod 755 "$@"
+		chown -R "$username":"$username"
 	fi
+
+    permissions=$(ls -la "$@" | sed -n '2 p' | awk '{print $1" "$3":"$4}')
+    printf "Directory '$@': permissions $permissions set.\n"
 }
 
 get_user () {
@@ -278,23 +285,23 @@ install_lightdm () {
 
 install_wm () {
     echo "Installing qtile..."
-    install_qtile > /dev/null
+    install_qtile
 
-    install_picom > /dev/null
+#    install_picom
 
-    install_nitrogen > /dev/null
+#    install_nitrogen
 
-    install_pywal > /dev/null
+#    install_pywal
 
-    install_rofi > /dev/null
+#    install_rofi
 
-    install_firefox > /dev/null
+#    install_firefox
 
-    install_kitty > /dev/null
+    install_kitty
 
-    install_package "ranger" > /dev/null
+#    install_package "ranger"
 
-    install_lightdm > /dev/null
+    install_lightdm
 }
 
 main
