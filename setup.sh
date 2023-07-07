@@ -13,12 +13,23 @@ main () {
     clone_repository
     
     install_python
+    install_shh
     install_wm
+
+    set_ownership $username $home
 
     update_system
 }
 
 # G E N E R A L   F U N C T I O N S
+
+add_service () {
+    systemctl enable $1
+
+    if [[ "$2" == "start" ]]; then
+        systemctl start $1 
+    fi
+}
 
 backup_directory () {
     # Check if directory already exists. If yes, create a directory to
@@ -118,7 +129,7 @@ install_firefox () {
 
     # Copy desktop entry to be able to launch firefox from rofi or any other
     # application launcher
-    cp $repo_path/usr/share/applications/firefox.desktop \
+    cp $repo_path/files/firefox/firefox.desktop \
         /usr/share/applications/firefox.desktop
 
     # Create symlink to be able to launch firefox from the CLI if needed
@@ -144,7 +155,7 @@ install_nitrogen () {
     backup_directory $home/.config/nitrogen
     create_directory $home/.config/nitrogen
 
-    cp -r $repo_path/.config/nitrogen/* \
+    cp -r $repo_path/files/nitrogen/* \
         $home/.config/nitrogen
 }
 
@@ -154,8 +165,11 @@ install_kitty () {
     backup_directory $home/.config/kitty
     create_directory $home/.config/kitty
 
-    cp -r $repo_path/.config/kitty/* \
+    cp -r $repo_path/files/kitty/* \
         $home/.config/kitty
+
+    cp $repo_path/files/fonts/ttf/DejaVuSansMono-Bront.ttf \
+        $home/.local/share/fonts/ttf/
 }
 
 install_picom () {
@@ -164,7 +178,7 @@ install_picom () {
     backup_directory $home/.config/picom
     create_directory $home/.config/picom
 
-    cp -r $repo_path/.config/picom/* \
+    cp -r $repo_path/files/picom/* \
         $home/.config/picom
 }
 
@@ -190,8 +204,8 @@ install_pywal () {
 
     create_directory $home/.local/share/backgrounds
     # Copy background image to appropriate directory
-    cp $repo_path/.local/share/backgrounds/* \
-        $home/.local/share/backgrounds/
+    cp $repo_path/files/backgrounds/hollow_knight_lantern.png \
+        $home/.local/share/backgrounds/hollow_knight_lantern.png
     
     # Generate colorscheme on basis of background image
     runuser -l "$username" -c "wal -i $home/.local/share/backgrounds/hollow_knight_lantern.png"
@@ -200,8 +214,10 @@ install_pywal () {
 install_qtile () {
     # Install dependencies for qtile
     qtile_dependencies="xserver-xorg xinit libpangocairo-1.0-0 python3-xcffib \
-        python3-cairocffi playerctl"
+        python3-cairocffi playerctl dbus-x11"
     install_package $qtile_dependencies
+
+    install_pip_package mypy
 
     #runuser -l "$username" -c "pipx install qtile"
     install_pip_package "git+https://github.com/qtile/qtile@master"
@@ -212,7 +228,7 @@ install_qtile () {
     create_directory $home/.config/qtile
 
     # Copy qtile configuration files into directory
-    cp -r $repo_path/.config/qtile/* \
+    cp -r $repo_path/files/qtile/* \
         $home/.config/qtile
 
     # Check if pywal is properly installed. If not, install it.
@@ -228,13 +244,34 @@ install_rofi () {
     create_directory $home/.config/rofi
 
     # Copy rofi configuration files into directory
-    cp -r $repo_path/.config/rofi/* \
+    cp -r $repo_path/files/rofi/* \
         $home/.config/rofi
 }
 
+install_ssh () {
+    install_package "ssh openssh-client"
+    add_service ssh start
+}
+
 install_lightdm () {
-    lightdm_packages="lightdm slick-greeter"
+    lightdm_packages="lightdm slick-greeter xserver-xephyr"
     install_package $lightdm_packages
+
+    add_service lightdm
+
+    create_directory /etc/lightdm
+
+    cp $repo_path/files/lightdm/* \
+        /etc/lightdm/
+
+    install -Dm 755 "$repo_path/files/X11/.xinitrc" -t "$home"
+    install -Dm 755 "$repo_path/scripts/xinitrcsession-helper" -t "/usr/bin/"
+    install -Dm 644 "$repo_path/files/X11/xinitrc.desktop" \
+        -t "/usr/share/xsessions"
+
+    create_directory "/usr/share/backgrounds"
+    cp "$repo_path/files/backgrounds/hollow_knight_view.png" \
+        "/usr/share/backgrounds/hollow_knight_view.png"
 }
 
 install_wm () {
@@ -252,7 +289,7 @@ install_wm () {
 
     install_kitty
 
-    install_package "bottom ranger"
+    install_package "ranger"
 
     install_lightdm
 }
