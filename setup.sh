@@ -326,7 +326,7 @@ install_pipx () {
     # pipx runs with regular user permissions and installs packages in 
     # ~/.local/bin, so make sure that it is on PATH by either add an export to
     # your .bashrc or by calling 'pipx ensurepath'.
-    package_install pipx
+    install_package pipx
     #runuser -l "$username" -c "pipx ensurepath"
 }
 
