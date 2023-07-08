@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#fix-screen
+fix-screen
 
 # Autostart programs
 
@@ -18,4 +18,4 @@
 #nitrogen --restore &
 
 # Start Qtile
-exec dbus-launch --exit-with-session qtile start
+exec dbus-launch --exit-with-session ~/.local/bin/qtile start

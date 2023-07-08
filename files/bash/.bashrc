@@ -9,6 +9,8 @@
 
 # Add .local/bin to PATH for pip packages, personal scripts, and so on.
 export PATH="${PATH}:${HOME}/.local/bin"
+# Add Go to PATH
+export PATH="${PATH}:/usr/local/go/bin"
 
 # B A S H   H I S T O R Y
 

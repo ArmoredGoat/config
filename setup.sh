@@ -1,29 +1,56 @@
 #!/bin/bash
 
+# V A R I A B L E S
+
 base_url="https://github.com/"
 repo="ArmoredGoat/config"
 branch="main"
 url="$base_url/$repo/$branch"
 
+# F U N C T I O N S
+
 main () {
-    check_privilege
+    # Check if script is run with sudo privileges. If not, exit.
+    check_if_root
+    
+    # Gather information about environment.
     get_user
+
+    # Update system to be avoid problems by using old software.
     update_system
 
+    # Install git and clone repository to get started.
+    install_git
     clone_repository
-    
-    install_python
-    install_shh
-    install_wm
 
+    # Copy user files as fonts, backgrounds, etc. into corresponding
+    # directories.
+    copy_user_files
+    
+    # Install general applications and programming languages.
+    install_basic_packages
+    install_python
+    install_java
+    install_bash
+    install_go
+    
+    install_ssh
+
+    # Install window manager and its various dependencies and extensions.
+    install_window_manager
+    install_neovim
+
+    # Set ownership of all files created by root in home directory to user.
     set_ownership $username $home
 
+    # Update system before exiting to make sure everything is up to date and
+    # to remove unnecessary packages.
     update_system
 } 2> stderror
 
 # G E N E R A L   F U N C T I O N S
 
-add_service () {
+enable_service () {
     systemctl enable $1
 
     if [[ "$2" == "start" ]]; then
@@ -43,20 +70,17 @@ backup_directory () {
     fi
 }
 
-check_privilege () {
+check_if_root () {
+    # Read EUID (Effective User ID) to check if script is run with
+    # super user privileges (ID = 0). If not, abort script and tell
+    # user to use sudo.
     if [ "$EUID" -ne 0 ]; then 
-        echo "Please run script as root with sudo."
-    exit
-fi
+        printf "Please run script as root with sudo.\n"
+        exit
+    fi
 }
 
 clone_repository () {
-    # Make sure that git is installed.
-    install_package git
-
-    # Create directory for git repositories
-    create_directory $home/git
-
     repo_path="$home/git/config"
     # Clone git repository to /home/git
     git clone "$base_url/$repo.git" $repo_path
@@ -70,6 +94,25 @@ clone_repository () {
     if [[ ! "$current_branch" == "$branch" ]]; then
         git checkout $branch
     fi
+}
+
+copy_user_files () {
+    # Create directories in /usr/share (systemwide) and .local/share (user-only)
+    # to store backgrounds, fonts, icons, themes, ...
+    create_directory $home/.local/share/{fonts/ttf,backgrounds}
+    create_directory /usr/share/backgrounds
+
+    # Copy files to corresponding directories
+    # Copy font
+    cp $repo_path/files/fonts/ttf/DejaVuSansMono-Bront.ttf \
+        $home/.local/share/fonts/ttf/DejaVuSansMono-Bront.ttf
+    # Copy desktop background image
+    cp $repo_path/files/backgrounds/hollow_knight_lantern.png \
+        $home/.local/share/backgrounds/hollow_knight_lantern.png
+    # Copy login manager background image (must be in a directory
+    # which can be accessed by login manager)
+    cp $repo_path/files/backgrounds/hollow_knight_view.png \
+        /usr/share/backgrounds/hollow_knight_view.png
 }
 
 create_directory () {
@@ -126,6 +169,32 @@ update_system () {
 
 # I N S T A L L A T I O N   F U N C T I O N S
 
+install_bash () {
+    # Make sure bash packages are installed.
+    bash_packages="bash bash-completion bash-builtins bash-doc"
+    install_package $bash_packages
+
+    # Copy .bash* files for user into its home directory
+    cp $repo_path/files/bash/{.bashrc,.bash_aliases} $home/
+
+    # Copy .bashrc for root user in root directory
+    cp $repo_path/files/bash/.bashrc_root /root/
+}
+
+install_basic_packages () {
+    basic_packages="wget curl tar p7zip-full"
+    install_package $basic_packages
+}
+
+install_bottom () {
+    #TODO Impelent function to always fetch the latest version.
+    # Download latest bottom .deb package
+    curl -L https://github.com/ClementTsang/bottom/releases/download/0.9.3/bottom_0.9.3_amd64.deb \
+        -o /tmp/bottom_0.9.3_amd64.deb
+    # Install .deb package with dpkg
+    sudo dpkg -i /tmp/bottom_0.9.3_amd64.deb
+}
+
 install_firefox () {
     # Download latest version of Firefox
     wget -O /tmp/firefoxsetup.tar.bz2 \
@@ -156,6 +225,53 @@ install_firefox () {
     rm /tmp/firefoxsetup.tar.bz2
 }
 
+install_git () {
+    # Install git and its documentation
+    git_packages="git git-doc"
+    install_package $git_packages
+
+    # Create directory at user home for git repositories
+    create_directory $home/git
+}
+
+install_go () {
+    #TODO Implement function to always fetch latest stable version
+    # Download latest stazble version
+    wget https://go.dev/dl/go1.20.5.linux-amd64.tar.gz \
+        -O /tmp/go1.20.5.linux-amd64.tar.gz
+    # Remove any previous Go installation
+    rm -rf /usr/local/go
+    # Extract archive into /usr/local to create a fresh Go installation.
+    tar -C /usr/local -xzf /tmp/go1.20.5.linux-amd64.tar.gz
+
+    # Go is added to path by adding 'export PATH=$PATH:/usr/local/go/bin'
+    # to .profile or .bashrc
+}
+
+install_java () {
+    # Install Java Runtime Environment to be able to run java applications.
+    java_packages="openjdk-17-jre"
+    install_package $java_packages
+}
+
+install_lazygit () {
+    # Clone repository into git folder
+    git clone https://github.com/jesseduffield/lazygit.git $home/git/lazygit
+    cd $home/git/lazygit
+    go install
+}
+
+install_neovim () {
+    # Install dependencies
+    neovim_packages="neovim ripgrep gdu nodejs npm"
+    install_package $neovim_packages
+    install_lazygit
+
+    # Clone AstroNvim config into nvim directory
+    create_directory $home/.config/nvim
+    git clone --depth 1 https://github.com/AstroNvim/AstroNvim $home/.config/nvim
+}
+
 install_nitrogen () {
     install_package nitrogen
 
@@ -174,11 +290,6 @@ install_kitty () {
 
     cp -r $repo_path/files/kitty/* \
         $home/.config/kitty
-    
-    create_directory $home/.local/share/fonts/ttf
-
-    cp $repo_path/files/fonts/ttf/DejaVuSansMono-Bront.ttf \
-        $home/.local/share/fonts/ttf/
 }
 
 install_picom () {
@@ -192,29 +303,35 @@ install_picom () {
 }
 
 install_pipx () {
-    # Install pipx, an alternative pip frontend which address the problem 
-    # with '--break-system-packages'
-    runuser -l "$username" -c "pip3 install --break-system-packages pipx"
-    runuser -l "$username" -c "pipx ensurepath"
+    # https://pypa.github.io/pipx/
+    # pipx is like pip a general-purpose package installer for Python and uses
+    # the same package index, PyPI. As it is specifacally made for application
+    # installation, it adds isolation while maintaining availability and 
+    # connectiity between apps and shell. By using virtual environments, pipx
+    # addresses the problem that packages provided by apt and pip are mixed up.
+    # Mixing two package managers is a bad idea. Therefor, your distro protects
+    # you from doing that.
+    # pipx runs with regular user permissions and installs packages in 
+    # ~/.local/bin, so make sure that it is on PATH by either add an export to
+    # your .bashrc or by calling 'pipx ensurepath'.
+    package_install pipx
+    #runuser -l "$username" -c "pipx ensurepath"
 }
 
 install_python () {
-    python_packages="python3 python3-pip python3-venv"
+    # Install full Python 3 Suite and pip
+    python_packages="python3-full python3-pip"
     install_package $python_packages
 
+    # Install general-purpose package installer for Python
     install_pipx
 }
 
 install_pywal () {
-    pywal_dependencies="python3 imagemagick procps nitrogen"
-    install_package $pywal_dependencies
+    pywal_packages="imagemagick procps nitrogen"
+    install_package $pywal_packages
 
     install_pip_package pywal
-
-    create_directory $home/.local/share/backgrounds
-    # Copy background image to appropriate directory
-    cp $repo_path/files/backgrounds/hollow_knight_lantern.png \
-        $home/.local/share/backgrounds/hollow_knight_lantern.png
     
     # Generate colorscheme on basis of background image
     runuser -l "$username" -c "wal -i $home/.local/share/backgrounds/hollow_knight_lantern.png"
@@ -222,15 +339,19 @@ install_pywal () {
 
 install_qtile () {
     # Install dependencies for qtile
-    qtile_dependencies="xserver-xorg xinit libpangocairo-1.0-0 python3-xcffib \
-        python3-cairocffi playerctl dbus-x11 psutils"
-    install_package $qtile_dependencies
+    qtile_packages="xserver-xorg xinit dbus-x11 libpangocairo-1.0-0 \ 
+        python3-xcffib python3-cairocffi playerctl psutils"
+    install_package $qtile_packages
 
+    # Install MyPy package to be able to test your qtile config with
+    # 'qtile check'
     install_pip_package mypy
 
+    # Install qtile. Currently, it is necessary to get qtile from
+    # github due to a recent bug with cairocffi
     #runuser -l "$username" -c "pipx install qtile"
     install_pip_package "git+https://github.com/qtile/qtile@master"
-    runuser -l "$username" -c "qtile --version"
+    #runuser -l "$username" -c "qtile --version"
 
 
     backup_directory $home/.config/qtile
@@ -239,11 +360,6 @@ install_qtile () {
     # Copy qtile configuration files into directory
     cp -r $repo_path/files/qtile/* \
         $home/.config/qtile
-
-    # Check if pywal is properly installed. If not, install it.
-    if  [ ! -n "$(pipx list | grep pywal)" ]; then
-        install_pywal
-    fi
 }
 
 install_rofi () {
@@ -258,15 +374,18 @@ install_rofi () {
 }
 
 install_ssh () {
-    install_package "ssh openssh-client"
-    add_service ssh start
+    # Install SSH meta package to be able to access and to be accessed remotely.
+    install_package "ssh"
+
+    # Enable and start ssh.service
+    enable_service ssh.service start
 }
 
 install_lightdm () {
     lightdm_packages="lightdm slick-greeter xserver-xephyr"
     install_package $lightdm_packages
 
-    add_service lightdm
+    enable_service lightdm
 
     create_directory /etc/lightdm
 
@@ -278,20 +397,17 @@ install_lightdm () {
     install -Dm 644 "$repo_path/files/X11/xinitrc.desktop" \
         -t "/usr/share/xsessions"
 
-    create_directory "/usr/share/backgrounds"
-    cp "$repo_path/files/backgrounds/hollow_knight_view.png" \
-        "/usr/share/backgrounds/hollow_knight_view.png"
 }
 
-install_wm () {
+install_window_manager () {
     echo "Installing qtile..."
     install_qtile
 
-#    install_picom
+    install_picom
 
-#    install_nitrogen
+    install_nitrogen
 
-#    install_pywal
+    install_pywal
 
 #    install_rofi
 
