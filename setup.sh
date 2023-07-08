@@ -26,6 +26,9 @@ main () {
     # Copy user files as fonts, backgrounds, etc. into corresponding
     # directories.
     copy_user_files
+    # Copy user scripts into .local/bin and ensure it is on path during
+    # installation.
+    copy_user_scripts
     
     # Install general applications and programming languages.
     install_basic_packages
@@ -111,8 +114,16 @@ copy_user_files () {
         $home/.local/share/backgrounds/hollow_knight_lantern.png
     # Copy login manager background image (must be in a directory
     # which can be accessed by login manager)
-    cp $repo_path/files/backgrounds/hollow_knight_view.png \
-        /usr/share/backgrounds/hollow_knight_view.png
+    cp $repo_path/files/backgrounds/hollow_knight_view.jpg \
+        /usr/share/backgrounds/hollow_knight_view.jpg
+}
+
+copy_user_scripts () {
+    # Copy script to fix screen on login (vm)
+    install -Dm 755 "$repo_path/scripts/fix-screen" -t "$home/.local/bin"
+
+    # Ensure ~/.local/bin is on PATH
+    export PATH="$PATH:$home/.local/bin"
 }
 
 create_directory () {
@@ -244,8 +255,9 @@ install_go () {
     # Extract archive into /usr/local to create a fresh Go installation.
     tar -C /usr/local -xzf /tmp/go1.20.5.linux-amd64.tar.gz
 
-    # Go is added to path by adding 'export PATH=$PATH:/usr/local/go/bin'
+    # Go is also added to path by adding 'export PATH=$PATH:/usr/local/go/bin'
     # to .profile or .bashrc
+    export PATH=$PATH:/usr/local/go/bin
 }
 
 install_java () {
