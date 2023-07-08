@@ -12,6 +12,8 @@ alias gb='git checkout -b'      # Create new Git branch and move to new branch
 alias gd='git diff'             # View difference
 
 # Q O L
+alias update='apt update && apt upgrade -y && apt autoremove -y && apt autoclean -y'
+
 alias cd..='cd ..'              # Get rid of command not found
 alias ..='cd ..;pwd'            # Move to parent folder
 alias ...='cd ../..;pwd'        # Move up two parent folders
