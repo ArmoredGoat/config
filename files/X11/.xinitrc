@@ -1,6 +1,6 @@
 #!/bin/sh
 
-fix-screen
+/home/julius/.local/bin/fix-screen
 
 # Autostart programs
 

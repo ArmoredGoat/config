@@ -351,8 +351,7 @@ install_pywal () {
 
 install_qtile () {
     # Install dependencies for qtile
-    qtile_packages="xserver-xorg xinit dbus-x11 libpangocairo-1.0-0 \ 
-        python3-xcffib python3-cairocffi playerctl psutils"
+    qtile_packages="xserver-xorg xinit dbus-x11 libpangocairo-1.0-0 python3-xcffib python3-cairocffi playerctl psutils"
     install_package $qtile_packages
 
     # Install MyPy package to be able to test your qtile config with
