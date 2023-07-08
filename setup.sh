@@ -420,9 +420,9 @@ install_window_manager () {
 
     install_pywal
 
-#    install_rofi
+    install_rofi
 
-#    install_firefox
+    install_firefox
 
     install_kitty
 
