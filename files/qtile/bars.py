@@ -18,7 +18,7 @@ def init_colors(cache):
     lazy.reload()
 
 
-init_colors(cache)
+#init_colors(cache)
 
 
 def search():

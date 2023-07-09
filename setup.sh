@@ -346,7 +346,7 @@ install_pywal () {
     install_pip_package pywal
     
     # Generate colorscheme on basis of background image
-    runuser -l "$username" -c "wal -i $home/.local/share/backgrounds/hollow_knight_lantern.png"
+    #runuser -l "$username" -c "wal -i $home/.local/share/backgrounds/hollow_knight_lantern.png"
 }
 
 install_qtile () {
