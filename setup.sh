@@ -426,7 +426,7 @@ install_window_manager () {
 
     install_kitty
 
-#    install_package "ranger"
+    install_package "ranger"
 
     install_lightdm
 }
